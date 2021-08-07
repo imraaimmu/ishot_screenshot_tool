@@ -273,6 +273,7 @@ public class VideoSplitterJPanel {
 		});
 
 		this.sourceFilePathTextField.setDropTarget(new DropTarget() {
+
 			public synchronized void drop(DropTargetDropEvent evt) {
 				try {
 					evt.acceptDrop(DnDConstants.ACTION_COPY);
@@ -606,18 +607,18 @@ public class VideoSplitterJPanel {
 			}
 
 		});
-		this.resetButton = new JButton(SplitterLocaleContent.RESET);
-		this.resetButton.setBounds(ComponentBounds.resetButtonBounds);
-		jPanel.add(this.resetButton);
+		resetButton = new JButton(SplitterLocaleContent.RESET);
+		resetButton.setBounds(ComponentBounds.resetButtonBounds);
+		jPanel.add(resetButton);
 		this.backButton = new JButton(SplitterLocaleContent.BACK);
 		this.backButton.setBounds(ComponentBounds.backButtonBounds);
 		jPanel.add(this.backButton);
-		this.closeButton = new JButton(SplitterLocaleContent.CLOSE);
-		this.closeButton.setVisible(false);
+		closeButton = new JButton(SplitterLocaleContent.CLOSE);
+		closeButton.setVisible(false);
 		this.backButton.setVisible(false);
-		this.closeButton.setBounds(ComponentBounds.closeButtonBounds);
-		jPanel.add(this.closeButton);
-		this.resetButton.addActionListener(new ActionListener(){
+		closeButton.setBounds(ComponentBounds.closeButtonBounds);
+		jPanel.add(closeButton);
+		resetButton.addActionListener(new ActionListener(){
 			Thread thread;
 
 			public void actionPerformed(ActionEvent e) {
@@ -666,7 +667,7 @@ public class VideoSplitterJPanel {
 			}
 
 		});
-		this.closeButton.addActionListener(new ActionListener(){
+		closeButton.addActionListener(new ActionListener(){
 			Thread thread;
 
 			public void actionPerformed(ActionEvent e) {
@@ -911,9 +912,9 @@ public class VideoSplitterJPanel {
 		this.startTimeErrorLabel.setVisible(false);
 		this.endTimeErrorLabel.setVisible(false);
 		this.sourceFilePathTextField.grabFocus();
-		this.closeButton.setVisible(false);
+		closeButton.setVisible(false);
 		this.backButton.setVisible(false);
-		this.resetButton.setVisible(false);
+		resetButton.setVisible(false);
 		this.splitButton.setVisible(false);
 		grabInitialFocus();
 	}

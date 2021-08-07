@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
@@ -20,9 +21,10 @@ public class DocumentMode {
 
 	public static boolean addImage(String fileName) throws IOException {
 		HSSFWorkbook workbook = null;
+		FileInputStream fileInputStream = null;
 		try {
 			int row = 0;
-			FileInputStream fileInputStream = new FileInputStream(new File(fileName + ".ods"));
+			fileInputStream = new FileInputStream(new File(fileName + ".ods"));
 			workbook = new HSSFWorkbook(fileInputStream);
 			List<HSSFPictureData> a = workbook.getAllPictures();
 			row = a.size() == 0 ? 1 : a.size() *47;
@@ -35,6 +37,10 @@ public class DocumentMode {
 			FileUtils.forceDelete(file);
 			return false;
 		}finally{
+			if(Objects.nonNull(fileInputStream))
+			fileInputStream.close();
+			if(Objects.nonNull(workbook))
+			workbook.close();
 		}
 		return true;
 	}
@@ -70,12 +76,16 @@ public class DocumentMode {
 		anchor.setCol2(10);
 		Picture picture = drawing.createPicture(anchor, pictureIndex);
 		picture.resize(0.7);
+		FileOutputStream fileOutputStream = null;
 		try{
-			FileOutputStream fileOutputStream = new FileOutputStream(fileName+ ".ods");
+			fileOutputStream = new FileOutputStream(fileName+ ".ods");
 			workbook.write(fileOutputStream);
 			FileUtils.forceDelete(file);
-			fileOutputStream.close();
 		}finally {
+			if(Objects.nonNull(fileOutputStream))
+			fileOutputStream.close();
+			if(Objects.nonNull(workbook))
+			workbook.close();
 		}
 	}
 
