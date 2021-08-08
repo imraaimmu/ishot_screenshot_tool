@@ -12,8 +12,6 @@ import java.awt.Graphics2D;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.MenuItem;
 import java.awt.Point;
 import java.awt.PopupMenu;
@@ -30,7 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -50,11 +47,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.FileLock;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -79,8 +74,6 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.MouseInputAdapter;
 
-import javafx.application.Platform;
-import tool.enhancer.JavaFxToolLayoutWithShapes;
 import tool.splitter.CommonMethods;
 import tool.splitter.VideoCutter;
 import tool.splitter.VideoSplitterJPanel;
@@ -109,8 +102,6 @@ public class AssistiveScreenshot extends MouseInputAdapter
 	static Timer delay2Timer = new Timer();
 	static Timer delay5Timer = new Timer();
 	static Timer delayCustomTimer = new Timer();
-	public static boolean isAdvanceFullScreenShot = false;
-	protected static boolean isFullScreenShot = false;
 	protected static int splitSize = 0;
 	protected static int customDelayTime = 0;
 	public static boolean isVideoPaused = false;
@@ -138,9 +129,6 @@ public class AssistiveScreenshot extends MouseInputAdapter
 	static ActionListener mainActionListener;
 	static Logger logger = Logger.getLogger(AssistiveScreenshot.class.getName());
 	static FileHandler fh; 
-	AssistiveScreenshot() {}
-	{
-	}
 
 	AssistiveScreenshot(Component parent)
 	{
@@ -360,59 +348,6 @@ public class AssistiveScreenshot extends MouseInputAdapter
 		fh.setFormatter(formatter);
 	}
 
-	private static void addShortcutToButton(final PopUpDemo menu) {
-		KeyboardFocusManager.getCurrentKeyboardFocusManager()
-		.addKeyEventDispatcher(new KeyEventDispatcher() {
-			public boolean dispatchKeyEvent(KeyEvent e) {
-				if(e.toString().contains("KEY_PRESSED")){
-					if((isRecording || PopUpDemo.resume.isVisible()) && e.getKeyCode() == KeyEvent.VK_SPACE && ((e.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
-						try {
-							ImageMaker.execute(0, null, null);
-						} catch (Exception e1) {
-							Common.log(e1);
-							e1.printStackTrace();
-						}
-					}
-					else if(PopUpDemo.pause.isVisible() && (e.getModifiers() & KeyEvent.CTRL_MASK) != 0 && e.getKeyCode() == KeyEvent.VK_P){
-						PopUpDemo.pauseVideo();
-					}
-					else if(PopUpDemo.resume.isVisible() && (e.getModifiers() & KeyEvent.CTRL_MASK) != 0 && e.getKeyCode() == KeyEvent.VK_R){
-						PopUpDemo.resumeVideo();
-					}
-					else if((e.getModifiers() & KeyEvent.CTRL_MASK) != 0 && e.getKeyCode() == KeyEvent.VK_O){
-						PopUpDemo.openSavedLocation();
-					}
-					else if((e.getModifiers() & KeyEvent.CTRL_MASK) == 0 && e.getKeyCode() == KeyEvent.VK_SPACE){
-						try {
-							clickAssistiveButton(menu);
-						} catch (FileNotFoundException e1) {
-							Common.log(e1);
-							e1.printStackTrace();
-						} catch (AWTException e1) {
-							Common.log(e1);
-							e1.printStackTrace();
-						} catch (IOException e1) {
-							Common.log(e1);
-							e1.printStackTrace();
-						} catch (Exception e1) {
-							Common.log(e1);
-							e1.printStackTrace();
-						}
-					}else if(e.getKeyCode() == KeyEvent.VK_ESCAPE){
-						if(ScreenCaptureRectangle.selectionPane != null){
-							SwingUtilities.getWindowAncestor(ScreenCaptureRectangle.selectionPane).dispose();
-							AssistiveScreenshot.showButton();
-							ScreenCaptureRectangle.frame.dispose();
-							cancelRectangularThing();
-						}
-					}
-				}
-				return false;
-			}
-
-		});
-	}
-
 	public static void cancelRectangularThing() {
 		AssistiveScreenshot.isRectangularVideoSnip = false;
 		AssistiveScreenshot.isRectangularSnip = false;
@@ -531,6 +466,7 @@ public class AssistiveScreenshot extends MouseInputAdapter
 		PopUpDemo.image.setEnabled(true);
 		PopUpDemo.videoQualityMenu.setEnabled(true);
 		PopUpDemo.splitVideo.setEnabled(true);
+		PopUpDemo.recordAudio.setEnabled(true);
 		stopButton.setVisible(false);
 		assistiveButton.setVisible(true);
 		PopUpDemo.takeScreenshot.setVisible(false);
@@ -579,6 +515,7 @@ public class AssistiveScreenshot extends MouseInputAdapter
 			isRecording = true;
 			PopUpDemo.image.setEnabled(false);
 			PopUpDemo.videoQualityMenu.setEnabled(false);
+			PopUpDemo.recordAudio.setEnabled(false);
 			PopUpDemo.splitVideo.setEnabled(false);
 			PopUpDemo.takeScreenshot.setVisible(true);
 			PopUpDemo.snipVideo.setEnabled(false);
@@ -632,7 +569,7 @@ public class AssistiveScreenshot extends MouseInputAdapter
 				FileOutputStream fileOutputStream = new FileOutputStream(file);
 				ImageIO.write((RenderedImage)image, "png", fileOutputStream);
 				fileOutputStream.close();
-				if (new File(fileName + ".ods").exists()) {
+				if (new File(fileName + DocumentMode.DOCUMENT_FORMAT).exists()) {
 					if(!DocumentMode.addImage(fileName)){
 						Common.fileIsBeingUsedMessage();
 					}
@@ -913,14 +850,13 @@ class PopUpDemo extends JPopupMenu {
     JMenuItem delay5sec;
     JMenuItem delayCustomSec;
     public static JCheckBoxMenuItem documentMode;
-    JMenuItem fullScreenshot;
-    JMenuItem advanceFullScreenshot;
     JMenuItem dnd;
     public static JMenuItem reportIssue;
     JMenuItem exit;
     public static JMenuItem rectangleSnip;
     public static JMenuItem takeScreenshot;
     public static JMenuItem splitVideo;
+    public static JMenuItem recordAudio;
     public static JMenu videoQualityMenu;
     public static JCheckBoxMenuItem videoQualityNormal;
     public static JCheckBoxMenuItem videoQualityHd;
@@ -934,7 +870,6 @@ class PopUpDemo extends JPopupMenu {
     public static JCheckBoxMenuItem userDefinedName;
     final JMenu screenshotOptionsMenu;
     public static JMenuItem videoSplitter;
-    public static JMenuItem videoEnhancer;
     
     
     public PopUpDemo() {
@@ -975,12 +910,9 @@ class PopUpDemo extends JPopupMenu {
     	
     	exit= new JMenuItem(LocaleContent.getEXIT());
     	videoSplitter= new JMenuItem(LocaleContent.getVIDEO_SPLITTER());
-    	videoEnhancer= new JMenuItem(LocaleContent.getVIDEO_ENHANCER());
     	delay2sec= new JMenuItem(LocaleContent.getDELAY_2_SEC());
     	delay5sec= new JMenuItem(LocaleContent.getDELAY_5_SEC());
     	delayCustomSec= new JMenuItem(LocaleContent.getDELAY_CUSTOM());
-    	fullScreenshot= new JMenuItem(LocaleContent.getFULL_SCREENSHOT());
-    	advanceFullScreenshot= new JMenuItem(LocaleContent.getID_CLASS_SCREENSHOT());
     	dnd= new JMenuItem(LocaleContent.getGO_TO_TRAY());
     	rectangleSnip = new JMenuItem(LocaleContent.getRECTANGULAR_SNIP());
     	reportIssue= new JMenuItem(LocaleContent.getREPORT_ISSUE());
@@ -988,6 +920,8 @@ class PopUpDemo extends JPopupMenu {
     	takeScreenshot.setVisible(false);
     	splitVideo =new JMenuItem(LocaleContent.getSPLIT_VIDEO());
     	splitVideo.setEnabled(false);
+    	recordAudio =new JCheckBoxMenuItem(LocaleContent.getRECORD_AUDIO());
+    	recordAudio.setEnabled(false);
     	
     	if(AssistiveScreenshot.prop.get("showClicks") != null && Boolean.valueOf(AssistiveScreenshot.prop.get("showClicks").toString())){
     		showClicks = new JCheckBoxMenuItem(LocaleContent.getSHOW_CLICKS(),true);
@@ -1004,6 +938,7 @@ class PopUpDemo extends JPopupMenu {
     		allScreen = new JCheckBoxMenuItem(LocaleContent.getALL_MONITORS(), false);
     	}
     	recorderOptionsMenu = new JMenu(LocaleContent.getOPTIONS());
+    	recorderOptionsMenu.add(recordAudio);
     	recorderOptionsMenu.add(splitVideo);
     	recorderOptionsMenu.add(showClicks);
     	videoQualityMenu = new JMenu(LocaleContent.getVIDEO_QUALITY());
@@ -1042,8 +977,6 @@ class PopUpDemo extends JPopupMenu {
     	if(AssistiveScreenshot.prop.get("documentmode") != null && Boolean.valueOf(AssistiveScreenshot.prop.get("documentmode").toString())){
     		documentMode= new JCheckBoxMenuItem(LocaleContent.getDOCUMENT_MODE(),true);
     		delayOptionsMenu.setEnabled(true);
-			fullScreenshot.setEnabled(true);
-			advanceFullScreenshot.setEnabled(true);
 			rectangleSnip.setEnabled(true);
     	}else{
     		documentMode= new JCheckBoxMenuItem(LocaleContent.getDOCUMENT_MODE(),false);
@@ -1058,6 +991,7 @@ class PopUpDemo extends JPopupMenu {
     			video= new JCheckBoxMenuItem(LocaleContent.getSCREEN_RECORDER_MODE(), true);
         		image.setSelected(false);
         		video.setSelected(true);
+        		recordAudio.setEnabled(true);
         		splitVideo.setEnabled(true);
         		snipVideo.setEnabled(true);
         		videoQualityMenu.setEnabled(true);
@@ -1066,15 +1000,11 @@ class PopUpDemo extends JPopupMenu {
         		delayOptionsMenu.setEnabled(false);
         		image.setSelected(false);
         		delayOptionsMenu.setEnabled(false);
-    			advanceFullScreenshot.setEnabled(false);
-    			fullScreenshot.setEnabled(false);
     			rectangleSnip.setEnabled(false);
     			showPreviewMenu.setEnabled(false);
     			AssistiveScreenshot.setImageToVideoStartButton(false);
     	}
     	
-    	screenshotOptionsMenu.add(fullScreenshot);
-    	screenshotOptionsMenu.add(advanceFullScreenshot);
     	screenshotOptionsMenu.add(documentMode);
     	screenshotOptionsMenu.add(showPreviewMenu);
     	
@@ -1105,7 +1035,6 @@ class PopUpDemo extends JPopupMenu {
         add(allScreen);
         add(saveAsMenu);
 //        add(videoSplitter);
-//        add(videoEnhancer);
         add(new JSeparator());
         add(dnd);
         add(reset);
@@ -1120,6 +1049,7 @@ class PopUpDemo extends JPopupMenu {
             		AssistiveScreenshot.assistiveButton.setEnabled(false);
             		AssistiveScreenshot.stopButton.setVisible(false);
             		AssistiveScreenshot.setImageToAssisitveButton(false);
+            		recordAudio.setEnabled(false);
             		splitVideo.setEnabled(false);
             		videoQualityMenu.setEnabled(false);
             		recorderOptionsMenu.setEnabled(false);
@@ -1129,8 +1059,6 @@ class PopUpDemo extends JPopupMenu {
             		AssistiveScreenshot.storeTofile("image","true","Image mode");
             		AssistiveScreenshot.storeTofile("video","false","Video mode");
     				documentMode.setEnabled(true);
-    				advanceFullScreenshot.setEnabled(true);
-    				fullScreenshot.setEnabled(true);
     				rectangleSnip.setEnabled(true);
     				showPreviewMenu.setEnabled(true);
     				AssistiveScreenshot.assistiveButton.setEnabled(true);
@@ -1146,6 +1074,7 @@ class PopUpDemo extends JPopupMenu {
             public void itemStateChanged(ItemEvent e) {
             	if(e.getStateChange() == 1){
             		AssistiveScreenshot.assistiveButton.setEnabled(false);
+            		recordAudio.setEnabled(true);
             		splitVideo.setEnabled(true);
             		snipVideo.setEnabled(true);
             		videoQualityMenu.setEnabled(true);
@@ -1156,8 +1085,6 @@ class PopUpDemo extends JPopupMenu {
             		AssistiveScreenshot.storeTofile("image","false","Image mode");
             		AssistiveScreenshot.setImageToVideoStartButton(false);
 					documentMode.setEnabled(false);
-					advanceFullScreenshot.setEnabled(false);
-					fullScreenshot.setEnabled(false);
 					rectangleSnip.setEnabled(false);
 					showPreviewMenu.setEnabled(false);
 					AssistiveScreenshot.assistiveButton.setEnabled(true);
@@ -1256,7 +1183,7 @@ class PopUpDemo extends JPopupMenu {
 					}
 				}
 				Object[] option = new Object[]{LocaleContent.getCOPY()};
-	            int appNameFilter = JOptionPane.showOptionDialog(AssistiveScreenshot.frame, "imrankhan.m@mookambikainfo.com", LocaleContent.getMAIL_TO(), 2, 3, new ImageIcon("ishot-images/screenshot.png"), option, option[0]);
+	            int appNameFilter = JOptionPane.showOptionDialog(AssistiveScreenshot.frame, "support@onchangetechnologies.com", LocaleContent.getMAIL_TO(), 2, 3, new ImageIcon("ishot-images/screenshot.png"), option, option[0]);
 	            if (appNameFilter == 0) {
 	            	StringSelection stringSelection = new StringSelection("imrankhan.m@mookambikainfo.com");
 	            	Clipboard c = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -1384,60 +1311,6 @@ class PopUpDemo extends JPopupMenu {
 
 					
 				});
-				}
-			}
-        });
-        
-        videoEnhancer.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-//				if(AssistiveScreenshot.x != 0 && AssistiveScreenshot.y != 0)
-//					AssistiveScreenshot.storeTofile("lastlocation",AssistiveScreenshot.x+","+AssistiveScreenshot.y,"Last position");
-//				StringBuilder cmd = new StringBuilder();
-//		        cmd.append(System.getProperty("java.home") + File.separator + "bin" + File.separator + "java ");
-//		        for (String jvmArg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-//		            cmd.append(jvmArg + " ");
-//		        }
-//		        cmd.append("-cp ").append(ManagementFactory.getRuntimeMXBean().getClassPath()).append(" ");
-//		        cmd.append(JavaFxToolLayoutWithShapes.class.getName()).append(" ");
-//		        try {
-//					Runtime.getRuntime().exec(cmd.toString());
-//				} catch (IOException e1) {
-//					e1.printStackTrace();
-//				}
-				if(!new File(CommonMethods.FFMPEG_EXE_PATH).exists()){
-					AssistiveScreenshot.ffmpegNotFoundException();
-					return;
-		    	}
-				if(JavaFxToolLayoutWithShapes.window == null){
-				new Thread() {
-		            @Override
-		            public void run() {
-		                javafx.application.Application.launch(JavaFxToolLayoutWithShapes.class);
-		                if(JavaFxToolLayoutWithShapes.logger != null){
-		        			JavaFxToolLayoutWithShapes.logger.addHandler(AssistiveScreenshot.fh);	
-		        		}
-		            }
-		        }.start();
-				}else{
-					Platform.runLater(new Runnable() {
-						
-						@Override
-						public void run() {
-							JavaFxToolLayoutWithShapes.window.setIconified(false);
-							JavaFxToolLayoutWithShapes.goBack();
-							JavaFxToolLayoutWithShapes.sourcePathField.setText("");
-							JavaFxToolLayoutWithShapes.fileLocationField.setText("");
-							try {
-								JavaFxToolLayoutWithShapes.setDestinationPath();
-							} catch (Throwable e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							JavaFxToolLayoutWithShapes.window.show();
-							JavaFxToolLayoutWithShapes.window.toFront();
-							
-						}
-					});
 				}
 			}
         });
@@ -1686,8 +1559,6 @@ class PopUpDemo extends JPopupMenu {
             public void itemStateChanged(ItemEvent e) {
             	if(e.getStateChange() == 1){
 					delayOptionsMenu.setEnabled(true);
-					fullScreenshot.setEnabled(true);
-					advanceFullScreenshot.setEnabled(true);
 					rectangleSnip.setEnabled(true);
 					AssistiveScreenshot.storeTofile("documentmode","true","ods mode");
             	}else{
@@ -1695,34 +1566,7 @@ class PopUpDemo extends JPopupMenu {
             	}
             }
         });
-        ActionListener fullScreenshotListener = new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		AssistiveScreenshot.hideButton();
-        		AssistiveScreenshot.isAdvanceFullScreenShot  = false;
-        		AssistiveScreenshot.isFullScreenShot   = true;
-        		startFS();
-        		AssistiveScreenshot.isFullScreenShot = false;
-        		AssistiveScreenshot.isAdvanceFullScreenShot = false;
-        		AssistiveScreenshot.showButton();
-        	}
-
-        };
-        ActionListener afullScreenshotListener = new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		AssistiveScreenshot.hideButton();
-        		AssistiveScreenshot.isAdvanceFullScreenShot  = false;
-        		AssistiveScreenshot.isFullScreenShot   = true;
-        		startAFS();
-        		AssistiveScreenshot.isFullScreenShot = false;
-        		AssistiveScreenshot.isAdvanceFullScreenShot = false;
-        		AssistiveScreenshot.showButton();
-        	}
-        };
-
 			
-        fullScreenshot.addActionListener(fullScreenshotListener);
-        advanceFullScreenshot.addActionListener(afullScreenshotListener);
-        
         dnd.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				AssistiveScreenshot.hideButton();
@@ -1812,105 +1656,17 @@ class PopUpDemo extends JPopupMenu {
 		video= new JCheckBoxMenuItem(LocaleContent.getSCREEN_RECORDER_MODE(), true);
 		video.setSelected(false);
 		image.setSelected(true);
+		recordAudio.setEnabled(false);
 		splitVideo.setEnabled(false);
 		videoQualityMenu.setEnabled(false);
 		recorderOptionsMenu.setEnabled(false);
 		screenshotOptionsMenu.setEnabled(true);
 
 		delayOptionsMenu.setEnabled(true);
-		advanceFullScreenshot.setEnabled(true);
-		fullScreenshot.setEnabled(true);
 		rectangleSnip.setEnabled(true);
 		showPreviewMenu.setEnabled(true);
 		
 		AssistiveScreenshot.setImageToAssisitveButton(false);
-	}
-	public void startAFS() {
-		AssistiveScreenshot.isAdvanceFullScreenShot = true;
-		AssistiveScreenshot.isFullScreenShot = false;
-		String url;
-		url = JOptionPane.showInputDialog(AssistiveScreenshot.frame, (Object)LocaleContent.getENTER_URL(),getDataFromClipboard());
-
-		if(Objects.nonNull(url) && url.isEmpty()){
-			Common.urlValidationMessage();
-			startAFS();
-		}
-		else if(Objects.nonNull(url) && !url.isEmpty()){
-			if(isValidURL(url)){
-				String folderPath = "";
-				if(AssistiveScreenshot.prop.get("currentlocation") != null && !String.valueOf(AssistiveScreenshot.prop.get("currentlocation")).isEmpty()){
-					folderPath = String.valueOf(AssistiveScreenshot.prop.get("currentlocation"));
-				}
-				if(folderPath.equals("")){
-					File file = new File(AssistiveScreenshot.currentDirectory+"screenshots"+AssistiveScreenshot.slash+AssistiveScreenshot.slash);
-					if(!file.exists()){
-						file.mkdir();
-					}
-					folderPath = AssistiveScreenshot.currentDirectory+"screenshots"+AssistiveScreenshot.slash+AssistiveScreenshot.slash;
-				}
-				Calendar now = Calendar.getInstance();
-				ScrollScreenShot.takeFullScreenShot(url, folderPath+ImageMaker.formatter.format(now.getTime())+".jpg");
-			}else{
-				Common.showInvalidUrl();
-					startAFS();
-			}
-		}
-	
-	}
-
-	public void startFS() {
-		String url;
-		Map<String, String> resultMap = getData();
-		if (Integer.parseInt(resultMap.get("result")) == JOptionPane.YES_OPTION)
-		{
-			url = resultMap.get("url");
-			if(isInteger(resultMap.get("time"))){
-				if(resultMap.get("time") != null && !resultMap.get("time").isEmpty()){
-					int tempInput = Integer.parseInt(resultMap.get("time"));
-					if(tempInput>=0){
-						AssistiveScreenshot.fstimedelay = tempInput;
-						AssistiveScreenshot.storeTofile("fstimedelay",AssistiveScreenshot.fstimedelay+"","fstimedelay");
-					}else{
-						Common.numberLengthValidationMessage();
-						startFS();
-					}
-				}else{
-					Common.timeValidationMessage();
-					startFS();
-				}
-			}else{
-					Common.timeBlankValidationMessage();
-					AssistiveScreenshot.storeTofile("fstimedelay","0","fstimedelay");
-					AssistiveScreenshot.fstimedelay = 0;
-					startFS();
-					return;
-				}
-			if(Objects.nonNull(url) && url.isEmpty()){
-				Common.urlValidationMessage();
-				startFS();
-    		}
-    		else if(Objects.nonNull(url) && !url.isEmpty()){
-    			if(isValidURL(url)){
-    				String folderPath = "";
-    				if(AssistiveScreenshot.prop.get("currentlocation") != null && !String.valueOf(AssistiveScreenshot.prop.get("currentlocation")).isEmpty()){
-						folderPath = String.valueOf(AssistiveScreenshot.prop.get("currentlocation"));
-					}
-					if(folderPath.equals("")){
-						File file = new File(AssistiveScreenshot.currentDirectory+"screenshots"+AssistiveScreenshot.slash+AssistiveScreenshot.slash);
-						if(!file.exists()){
-							file.mkdir();
-						}
-						folderPath = AssistiveScreenshot.currentDirectory+"screenshots"+AssistiveScreenshot.slash+AssistiveScreenshot.slash;
-					}
-    				Calendar now = Calendar.getInstance();
-    				ScrollScreenShot.takeFullScreenShot(url, folderPath+ImageMaker.formatter.format(now.getTime())+".jpg");
-    			}else{
-    				Common.showInvalidUrl();
-    				startFS();
-    			}
-    		}
-		
-		}
 	}
 
 	public Map<String, String> getData() {

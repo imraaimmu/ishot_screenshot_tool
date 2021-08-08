@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.SwingUtilities;
 
@@ -16,6 +18,9 @@ import com.teamdev.jxcapture.CompressionQuality;
 import com.teamdev.jxcapture.EncodingParameters;
 import com.teamdev.jxcapture.InterpolationMode;
 import com.teamdev.jxcapture.VideoCapture;
+import com.teamdev.jxcapture.audio.AudioCodec;
+import com.teamdev.jxcapture.audio.AudioEncodingParameters;
+import com.teamdev.jxcapture.audio.AudioSource;
 import com.teamdev.jxcapture.video.FullScreen;
 import com.teamdev.jxcapture.video.VideoFormat;
 import com.teamdev.jxcapture.video.win.WMVCapture;
@@ -27,7 +32,8 @@ public class VideoCaptureMode {
 	static Timeline timeLine;
 	static String videoFile;
 	static boolean firstSplit = false;
-
+	static Logger logger = Logger.getLogger(VideoCaptureMode.class.getName());
+	
 	public static File startVideo(Rectangle defaultRectangle) throws Exception {
 		File file = null;
 		EncodingParameters encodingParameters = null;
@@ -71,6 +77,7 @@ public class VideoCaptureMode {
 					FileUtils.forceDelete(file);
 				}
 				encodingParameters = new EncodingParameters(file);
+				setAudio(encodingParameters);
 				encodingParameters.setCodec(videoCodec);
 				if(AssistiveScreenshot.videoQuallity == 2){
 					encodingParameters.setBitrate(1000000);
@@ -119,6 +126,42 @@ public class VideoCaptureMode {
 			AssistiveScreenshot.isVideoPaused = false;
 		}
 		return file;
+	}
+
+	private static void setAudio(EncodingParameters encodingParameters) {
+		if (PopUpDemo.recordAudio.isSelected()) {
+            logger.info("Available audio recording sources:");
+            List<AudioSource> audioSources = AudioSource.getAvailable();
+            for (AudioSource audioSource : audioSources) {
+            	logger.info("audioSource = " + audioSource);
+            }
+            if (audioSources.isEmpty()) {
+                logger.log(Level.SEVERE,"No audio sources available");
+            } else {
+                AudioSource audioSource = audioSources.get(0);
+                logger.info("Selected audio source = " + audioSource);
+                videoCapture.setAudioSource(audioSource);
+
+                List<AudioCodec> audioCodecs = videoCapture.getAudioCodecs();
+                if (audioSources.isEmpty()) {
+                	logger.log(Level.SEVERE,"No audio codecs available");
+                } else {
+                	logger.info("Available audio codecs:");
+                    for (AudioCodec audioCodec : audioCodecs) {
+                    	logger.info("audioCodec = " + audioCodec);
+                    }
+
+                    // Enable and configure audio encoding
+                    AudioEncodingParameters audioEncoding = new AudioEncodingParameters();
+
+                    AudioCodec audioCodec = audioCodecs.get(0);
+                    logger.info("Selected audio codec = " + audioCodec);
+                    audioEncoding.setCodec(audioCodec);
+
+                    encodingParameters.setAudioEncoding(audioEncoding);
+                }
+            }
+        }
 	}
 
 	public static String stopVideo() throws IOException {

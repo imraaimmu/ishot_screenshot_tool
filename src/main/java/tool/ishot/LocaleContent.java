@@ -33,6 +33,7 @@ public class LocaleContent {
 	private static String SHOW_PREVIEW = "Show Preview";
 	private static String SHOW_CLICKS = "Show Clicks";
 	private static String SPLIT_VIDEO = "Split Video";
+	private static String RECORD_AUDIO = "Record Audio";
 	private static String TAKE_SCREENSHOT = "Take Screenshot";
 	private static String REPORT_ISSUE = "Report Issue";
 	private static String RECTANGULAR_SNIP = "Rectangular Snip";
@@ -281,6 +282,12 @@ public class LocaleContent {
 	}
 	public static void setSPLIT_VIDEO(String sPLIT_VIDEO) {
 		SPLIT_VIDEO = sPLIT_VIDEO;
+	}
+	public static String getRECORD_AUDIO() {
+		return RECORD_AUDIO;
+	}
+	public static void setRECORD_AUDIO(String rECORD_AUDIO) {
+		RECORD_AUDIO = rECORD_AUDIO;
 	}
 	public static String getTAKE_SCREENSHOT() {
 		return TAKE_SCREENSHOT;
