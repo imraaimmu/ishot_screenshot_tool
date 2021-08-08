@@ -19,12 +19,14 @@ import org.apache.poi.ss.usermodel.Picture;
 
 public class DocumentMode {
 
+	public static final String DOCUMENT_FORMAT = ".xls";
+
 	public static boolean addImage(String fileName) throws IOException {
 		HSSFWorkbook workbook = null;
 		FileInputStream fileInputStream = null;
 		try {
 			int row = 0;
-			fileInputStream = new FileInputStream(new File(fileName + ".ods"));
+			fileInputStream = new FileInputStream(new File(fileName + DOCUMENT_FORMAT));
 			workbook = new HSSFWorkbook(fileInputStream);
 			List<HSSFPictureData> a = workbook.getAllPictures();
 			row = a.size() == 0 ? 1 : a.size() *47;
@@ -39,8 +41,6 @@ public class DocumentMode {
 		}finally{
 			if(Objects.nonNull(fileInputStream))
 			fileInputStream.close();
-			if(Objects.nonNull(workbook))
-			workbook.close();
 		}
 		return true;
 	}
@@ -60,7 +60,7 @@ public class DocumentMode {
 			worksheet = workbook.createSheet(LocaleContent.getSCREENSHOTS());
 			drawing = worksheet.createDrawingPatriarch();
 		} else {
-			FileInputStream odsInputStream = new FileInputStream(new File(fileName+ ".ods"));
+			FileInputStream odsInputStream = new FileInputStream(new File(fileName+ DOCUMENT_FORMAT));
 			workbook = new HSSFWorkbook(odsInputStream);
 			worksheet = workbook.getSheetAt(0);
 			helper = workbook.getCreationHelper();
@@ -78,14 +78,12 @@ public class DocumentMode {
 		picture.resize(0.7);
 		FileOutputStream fileOutputStream = null;
 		try{
-			fileOutputStream = new FileOutputStream(fileName+ ".ods");
+			fileOutputStream = new FileOutputStream(fileName+ DOCUMENT_FORMAT);
 			workbook.write(fileOutputStream);
 			FileUtils.forceDelete(file);
 		}finally {
 			if(Objects.nonNull(fileOutputStream))
 			fileOutputStream.close();
-			if(Objects.nonNull(workbook))
-			workbook.close();
 		}
 	}
 

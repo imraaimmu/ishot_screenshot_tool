@@ -569,7 +569,7 @@ public class AssistiveScreenshot extends MouseInputAdapter
 				FileOutputStream fileOutputStream = new FileOutputStream(file);
 				ImageIO.write((RenderedImage)image, "png", fileOutputStream);
 				fileOutputStream.close();
-				if (new File(fileName + ".ods").exists()) {
+				if (new File(fileName + DocumentMode.DOCUMENT_FORMAT).exists()) {
 					if(!DocumentMode.addImage(fileName)){
 						Common.fileIsBeingUsedMessage();
 					}
